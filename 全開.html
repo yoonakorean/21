@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <title>歡迎參加挑戰賽</title>
+  <meta property="og:title" content="歡迎參加挑戰賽">
+  <meta property="og:description" content="歡迎參加挑戰賽">
+  <meta property="og:image" content="https://yoonakorean.github.io/logo.png">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://yoonakorean.github.io/challenge-home/">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body {
+      font-family: sans-serif;
+      max-width: 800px;
+      margin: 30px auto;
+      text-align: center;
+      padding: 0 10px;
+    }
+    #logo {
+      width: 150px;
+      max-width: 80%;
+      margin-bottom: 10px;
+      display: block;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    input, button {
+      padding: 10px;
+      font-size: 16px;
+      width: 80%;
+      max-width: 400px;
+      margin: 10px auto;
+      display: block;
+      text-align: center;
+    }
+    #result {
+      margin-top: 20px;
+      text-align: center;
+    }
+    table {
+      margin: 0 auto;
+      border-collapse: collapse;
+      width: 100%;
+      max-width: 780px;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px 10px;
+      text-align: center;
+      vertical-align: middle;
+    }
+    th {
+      background-color: #f2f2f2;
+    }
+    .pass {
+      color: green;
+      font-weight: bold;
+    }
+    .not-tested {
+      color: gray;
+      font-style: italic;
+    }
+    a {
+      text-decoration: none;
+      color: inherit;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+    @media (max-width: 600px) {
+      input, button {
+        width: 95%;
+      }
+      table, th, td {
+        font-size: 14px;
+      }
+      #logo {
+        width: 120px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <img src="logo.png" alt="Logo" id="logo" />
+  <h1>歡迎參加挑戰賽</h1>
+  <input id="nicknameInput" type="text" placeholder="請輸入您的姓名" />
+  <button onclick="queryScores()">查詢成績</button>
+  <div id="result"></div>
+
+  <script>
+    // 建立所有單元：顯示名稱 vs 表單名稱
+    const allUnitsGrouped = [];
+
+    for (let i = 1; i <= 9; i++) {       // 大單元 1~9
+      for (let j = 1; j <= 4; j++) {     // 每個大單元的四個子單元
+        const displayNum = `${i}-${j}`;
+        const formNum = `21-${i}-${j}`;
+
+        // 網址編號規則：對應你的實際網址
+        const unitNum = (i * 100 + j).toString().padStart(4, '0');
+        const ssLink = `https://yoonakorean.github.io/21${unitNum}SS/`;
+        const stLink = `https://yoonakorean.github.io/21${unitNum}ST/`;
+
+        allUnitsGrouped.push({
+          stDisplay: `${displayNum} 句子聽打挑戰`,
+          ssDisplay: `${displayNum} 句子跟讀挑戰`,
+          stUnit: `${formNum} 句子聽打挑戰`,
+          ssUnit: `${formNum} 句子跟讀挑戰`,
+          stLink,
+          ssLink
+        });
+      }
+    }
+
+    function renderInitialTable() {
+      let html = `<h2>單元列表</h2>`;
+      html += `<table>
+        <thead>
+          <tr>
+            <th>句子跟讀挑戰</th>
+            <th>句子聽打挑戰</th>
+          </tr>
+        </thead>
+        <tbody>`;
+
+      allUnitsGrouped.forEach(row => {
+        html += "<tr>";
+        html += `<td><a href="${row.ssLink}" target="_blank" rel="noopener">${row.ssDisplay}</a></td>`;
+        html += `<td class="not-tested"><a href="${row.stLink}" target="_blank" rel="noopener">${row.stDisplay}</a><br>尚未挑戰</td>`;
+        html += "</tr>";
+      });
+
+      html += `</tbody></table>`;
+      document.getElementById("result").innerHTML = html;
+    }
+
+    async function queryScores() {
+      const nickname = document.getElementById("nicknameInput").value.trim();
+      if (!nickname) return;
+
+      const resultDiv = document.getElementById("result");
+      resultDiv.innerHTML = "查詢中，請稍候...";
+      try {
+        const apiUrl = "https://api.sheetbest.com/sheets/6609511a-f588-4e4f-bd2b-ed551cab8770";
+        const res = await fetch(apiUrl);
+        const data = await res.json();
+
+        const userRecords = data.filter(row => row.nickname && row.nickname.toLowerCase() === nickname.toLowerCase());
+
+        const latestScores = {};
+        userRecords.forEach(record => {
+          const unit = record.gametitle || "未分類";
+          const timestamp = new Date(record["時間戳記"]);
+          if (!latestScores[unit] || timestamp > latestScores[unit].timestamp) {
+            latestScores[unit] = {
+              score: Number(record.score) || 0,
+              timestamp
+            };
+          }
+        });
+
+        let html = `<h2>${nickname} 的成績概覽</h2>`;
+        html += `<table>
+          <thead>
+            <tr>
+              <th>句子跟讀挑戰</th>
+              <th>句子聽打挑戰</th>
+            </tr>
+          </thead>
+          <tbody>`;
+
+        allUnitsGrouped.forEach(row => {
+          const stScore = latestScores[row.stUnit]?.score || 0;
+
+          html += "<tr>";
+          html += `<td><a href="${row.ssLink}" target="_blank" rel="noopener">${row.ssDisplay}</a></td>`;
+          html += `<td class="${stScore >= 80 ? 'pass' : 'not-tested'}">
+                     <a href="${row.stLink}" target="_blank" rel="noopener">${row.stDisplay}</a><br>
+                     ${stScore >= 80 ? '✅ 已完成' : '尚未挑戰'}
+                   </td>`;
+          html += "</tr>";
+        });
+
+        html += `</tbody></table>`;
+        resultDiv.innerHTML = html;
+      } catch (err) {
+        resultDiv.innerHTML = `<p style="color:red;">發生錯誤，請稍後再試。</p>`;
+        console.error(err);
+      }
+    }
+
+    renderInitialTable();
+  </script>
+</body>
+</html>
