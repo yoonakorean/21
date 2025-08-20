@@ -33,7 +33,6 @@
       margin: 10px auto;
       display: block;
       text-align: center;
-
     }
     #result {
       margin-top: 20px;
@@ -98,12 +97,10 @@
         const displayNum = `${i}-${j}`;
         const formNum = `21-${i}-${j}`;
 
-        // 網址編號規則
-        const ssNum = `0${(i - 1) * 4 + j}01`; // SS 網址
-        const stNum = `0${(i - 1) * 4 + j}04`; // ST 網址
-
-        const ssLink = `https://yoonakorean.github.io/21${ssNum}SS/`;
-        const stLink = `https://yoonakorean.github.io/21${stNum}ST/`;
+        // 網址編號規則：對應你的實際網址
+        const unitNum = (i * 100 + j).toString().padStart(4, '0');
+        const ssLink = `https://yoonakorean.github.io/21${unitNum}SS/`;
+        const stLink = `https://yoonakorean.github.io/21${unitNum}ST/`;
 
         allUnitsGrouped.push({
           stDisplay: `${displayNum} 句子聽打挑戰`,
