@@ -148,14 +148,14 @@
 
         const userRecords = data.filter(row => row.nickname && row.nickname.toLowerCase() === nickname.toLowerCase());
 
-        const latestScores = {};
+        const bestScores = {};
         userRecords.forEach(record => {
           const unit = record.gametitle || "未分類";
-          const timestamp = new Date(record["時間戳記"]);
-          if (!latestScores[unit] || timestamp > latestScores[unit].timestamp) {
-            latestScores[unit] = {
-              score: Number(record.score) || 0,
-              timestamp
+          const score = Number(record.score) || 0;
+          if (!bestScores[unit] || score > bestScores[unit].score) {
+            bestScores[unit] = {
+              score,
+              timestamp: new Date(record["時間戳記"])
             };
           }
         });
@@ -171,13 +171,16 @@
           <tbody>`;
 
         allUnitsGrouped.forEach(row => {
-          const stScore = latestScores[row.stUnit]?.score || 0;
+          const stScore = bestScores[row.stUnit]?.score || 0;
 
           html += "<tr>";
-          html += `<td><a href="${row.ssLink}" target="_blank" rel="noopener">${row.ssDisplay}</a></td>`;
-          html += `<td class="${stScore >= 80 ? 'pass' : 'not-tested'}">
-                     <a href="${row.stLink}" target="_blank" rel="noopener">${row.stDisplay}</a><br>
-                     ${stScore >= 80 ? '✅ 已完成' : '尚未挑戰'}
+          html += `<td><a href="${row.ssLink}" target="_blank" rel="noopener" style="color:black;">${row.ssDisplay}</a></td>`;
+          
+          html += `<td>
+                     <a href="${row.stLink}" target="_blank" rel="noopener" style="color:black;">${row.stDisplay}</a><br>
+                     ${stScore > 0 
+                        ? `<span class="pass">${stScore} 分${stScore >= 80 ? ' ✅合格' : ''}</span>` 
+                        : '<span class="not-tested">尚未挑戰</span>'}
                    </td>`;
           html += "</tr>";
         });
